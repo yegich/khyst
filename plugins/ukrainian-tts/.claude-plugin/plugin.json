@@ -1,0 +1,7 @@
+{
+  "name": "ukrainian-tts",
+  "version": "0.1.0",
+  "description": "Skills for working with Ukrainian text-to-speech workflows — stress marks, character extraction, voice matching.",
+  "author": {"name": "yegich"},
+  "skills": "../skills/"
+}

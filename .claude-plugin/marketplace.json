@@ -1,0 +1,20 @@
+{
+  "name": "khyst",
+  "owner": {
+    "name": "yegich",
+    "url": "https://github.com/yegich"
+  },
+  "metadata": {
+    "description": "A personal collection of coding agent plugins — skills, tools, and knowledge for Claude Code and other agents.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "ukrainian-tts",
+      "source": "./plugins/ukrainian-tts",
+      "description": "Skills for Ukrainian TTS workflows — stress marks, character extraction, voice matching.",
+      "version": "0.1.0",
+      "tags": ["ukrainian", "tts", "audio"]
+    }
+  ]
+}
