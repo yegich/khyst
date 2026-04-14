@@ -6,13 +6,16 @@ set -euo pipefail
 
 plugin_root="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 data_dir="${CLAUDE_PLUGIN_DATA:-$HOME/.claude/plugins/data/hst}"
-manifest="$plugin_root/.claude-plugin/plugin.json"
 
-version=$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$manifest" | head -n1)
-[[ -z "$version" ]] && version="unknown"
+# Hash the contents of bin/ (excluding this installer) so any script change
+# retriggers install without needing a version bump.
+hash_input=$(find "$plugin_root/bin" -type f ! -name 'install.sh' -print0 \
+  | sort -z \
+  | xargs -0 shasum 2>/dev/null || true)
+current_hash=$(printf '%s' "$hash_input" | shasum | awk '{print $1}')
 
-stamp="$data_dir/installed-v${version}"
-if [[ -f "$stamp" ]]; then
+stamp="$data_dir/installed.hash"
+if [[ -f "$stamp" && "$(cat "$stamp" 2>/dev/null)" == "$current_hash" ]]; then
   exit 0
 fi
 
@@ -29,7 +32,7 @@ for script in "$plugin_root"/bin/*; do
   installed+=("$name")
 done
 
-touch "$stamp"
+printf '%s' "$current_hash" > "$stamp"
 
 if (( ${#installed[@]} > 0 )); then
   echo ""
