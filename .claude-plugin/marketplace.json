@@ -20,7 +20,7 @@
       "name": "hst",
       "source": "./plugins/hst",
       "description": "Yegich's personal toolkit — skills and commands for everyday workflows.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "tags": ["git", "worktree", "github"]
     }
   ]
