@@ -26,9 +26,11 @@ Parse `worktree <path>` / `branch refs/heads/<name>` pairs. Keep entries where:
 
 If none, print `No sibling worktrees to clean.` and stop.
 
-### 2. Try fzf picker
+### 2. Ensure fzf is installed
 
-Probe `command -v fzf`. If present, feed candidates to:
+Probe `command -v fzf`. If it is **not** present, you MUST first run step 3 (offer to install). Do not proceed to the numbered-list fallback until the user has explicitly declined the install offer. Only after install succeeds or is declined, continue below.
+
+Once fzf is available, feed candidates to:
 
 ```sh
 fzf --multi --height=60% --reverse \
