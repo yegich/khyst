@@ -17,8 +17,8 @@
       "tags": ["ukrainian", "tts", "audio"]
     },
     {
-      "name": "hst",
-      "source": "./plugins/hst",
+      "name": "worktree",
+      "source": "./plugins/worktree",
       "description": "Git worktree management — create worktrees from GitHub issues or custom names.",
       "version": "0.1.0",
       "tags": ["git", "worktree", "github"]
