@@ -1,6 +1,0 @@
-{
-  "name": "worktree",
-  "version": "0.1.0",
-  "description": "Git worktree management — create worktrees from GitHub issues or custom names.",
-  "author": {"name": "yegich"}
-}
