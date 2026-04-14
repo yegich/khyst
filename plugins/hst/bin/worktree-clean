@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+# worktree-clean — interactive multi-select remover for sibling git worktrees.
+# Run from inside a git repo; lists ../{repo}-* worktrees and removes the picked ones.
+# Branches are left intact.
+
+set -euo pipefail
+
+if ! command -v git >/dev/null 2>&1; then
+  echo "git not found" >&2
+  exit 1
+fi
+
+if ! root=$(git rev-parse --show-toplevel 2>/dev/null); then
+  echo "not inside a git repo" >&2
+  exit 1
+fi
+
+repo=$(basename "$root")
+parent=$(dirname "$root")
+
+candidates=$(git worktree list --porcelain | awk -v root="$root" -v parent="$parent" -v prefix="${repo}-" '
+  /^worktree / { path=$2; next }
+  /^branch /   { branch=$2; sub(/^refs\/heads\//, "", branch) }
+  /^$/ {
+    if (path && path != root) {
+      p=path; sub(/\/[^\/]+$/, "", p)
+      base=path; sub(/^.*\//, "", base)
+      if (p == parent && index(base, prefix) == 1) {
+        printf "%s\t%s\n", path, branch
+      }
+    }
+    path=""; branch=""
+  }
+  END {
+    if (path && path != root) {
+      p=path; sub(/\/[^\/]+$/, "", p)
+      base=path; sub(/^.*\//, "", base)
+      if (p == parent && index(base, prefix) == 1) {
+        printf "%s\t%s\n", path, branch
+      }
+    }
+  }
+')
+
+if [[ -z "$candidates" ]]; then
+  echo "No sibling worktrees to clean."
+  exit 0
+fi
+
+pick_with_fzf() {
+  printf '%s\n' "$candidates" | fzf \
+    --multi --height=60% --reverse \
+    --header='space: toggle   ctrl-a: select all   enter: confirm   esc: cancel' \
+    --bind 'ctrl-a:toggle-all' \
+    --prompt='worktrees to remove> '
+}
+
+pick_with_numbers() {
+  local -a lines
+  mapfile -t lines <<< "$candidates"
+  local i=1
+  printf '\n%-3s %-50s %s\n' '#' 'worktree' 'branch' >&2
+  for line in "${lines[@]}"; do
+    local path="${line%%$'\t'*}"
+    local branch="${line#*$'\t'}"
+    printf '%-3s %-50s %s\n' "$i" "$path" "$branch" >&2
+    ((i++))
+  done
+  printf '\nWhich to remove? (e.g. 1,3-5 or "all", empty to cancel): ' >&2
+  local reply
+  read -r reply
+  reply="${reply// /}"
+  if [[ -z "$reply" ]]; then
+    return 0
+  fi
+  if [[ "$reply" == "all" ]]; then
+    printf '%s\n' "${lines[@]}"
+    return 0
+  fi
+  local -a picked=()
+  IFS=',' read -ra parts <<< "$reply"
+  for part in "${parts[@]}"; do
+    if [[ "$part" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+      local start="${BASH_REMATCH[1]}" end="${BASH_REMATCH[2]}"
+      for ((n=start; n<=end; n++)); do
+        if (( n >= 1 && n <= ${#lines[@]} )); then
+          picked+=("${lines[n-1]}")
+        fi
+      done
+    elif [[ "$part" =~ ^[0-9]+$ ]]; then
+      if (( part >= 1 && part <= ${#lines[@]} )); then
+        picked+=("${lines[part-1]}")
+      fi
+    fi
+  done
+  printf '%s\n' "${picked[@]}"
+}
+
+if command -v fzf >/dev/null 2>&1 && [[ -t 0 && -t 1 ]]; then
+  selected=$(pick_with_fzf || true)
+else
+  if ! command -v fzf >/dev/null 2>&1; then
+    echo "(fzf not installed — using numbered-list picker. Install fzf for arrow-key UI.)" >&2
+  elif [[ ! -t 0 || ! -t 1 ]]; then
+    echo "(no TTY — using numbered-list picker.)" >&2
+  fi
+  selected=$(pick_with_numbers)
+fi
+
+if [[ -z "${selected:-}" ]]; then
+  echo "Nothing selected."
+  exit 0
+fi
+
+mapfile -t picked_lines <<< "$selected"
+
+echo
+echo "Will remove:"
+for line in "${picked_lines[@]}"; do
+  printf '  %s\n' "${line%%$'\t'*}"
+done
+printf '\nProceed? (y/N): '
+read -r confirm
+case "$confirm" in
+  y|Y|yes|YES) ;;
+  *) echo "Cancelled."; exit 0 ;;
+esac
+
+printf '\n%-50s %-30s %s\n' 'Worktree' 'Branch' 'Result'
+for line in "${picked_lines[@]}"; do
+  path="${line%%$'\t'*}"
+  branch="${line#*$'\t'}"
+  if out=$(git worktree remove "$path" 2>&1); then
+    result='removed'
+  elif grep -qiE 'dirty|modified|untracked' <<< "$out"; then
+    printf '%s is dirty. Force remove? (y/N): ' "$path" >&2
+    read -r force
+    case "$force" in
+      y|Y|yes|YES)
+        if git worktree remove --force "$path" >/dev/null 2>&1; then
+          result='removed (forced)'
+        else
+          result='failed'
+        fi
+        ;;
+      *) result='skipped (dirty)' ;;
+    esac
+  else
+    result="failed: ${out%%$'\n'*}"
+  fi
+  printf '%-50s %-30s %s\n' "$path" "$branch" "$result"
+done
