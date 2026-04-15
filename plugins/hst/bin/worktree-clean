@@ -56,8 +56,11 @@ pick_with_fzf() {
 }
 
 pick_with_numbers() {
-  local -a lines
-  mapfile -t lines <<< "$candidates"
+  local -a lines=()
+  local line
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && lines+=("$line")
+  done <<< "$candidates"
   local i=1
   printf '\n%-3s %-50s %s\n' '#' 'worktree' 'branch' >&2
   for line in "${lines[@]}"; do
@@ -112,7 +115,10 @@ if [[ -z "${selected:-}" ]]; then
   exit 0
 fi
 
-mapfile -t picked_lines <<< "$selected"
+picked_lines=()
+while IFS= read -r line; do
+  [[ -n "$line" ]] && picked_lines+=("$line")
+done <<< "$selected"
 
 echo
 echo "Will remove:"
