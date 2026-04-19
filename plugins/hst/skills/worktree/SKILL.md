@@ -35,14 +35,28 @@ Fetch the issue:
 gh issue view {N} --json number,title,body,url
 ```
 
-Derive the slug from the title:
-- Lowercase
-- Replace non-alphanumeric characters with hyphens
-- Collapse consecutive hyphens
-- Trim to 50 characters
-- Strip leading/trailing hyphens
+Derive the slug by **reading the issue title (and body if it helps) and writing a short, descriptive kebab-case phrase** — do not mechanically truncate the title. The slug goes in a filesystem path and a branch name, so it needs to be short enough to type and informative enough to remember which worktree is which.
 
-Worktree folder: `{repo}-{N}-{slug}` (e.g. `khyst-1-git-worktree-management`)
+### Slug rules
+- **Length:** aim for 2–4 tokens, ~20 characters max. Shorter is fine when the essence fits in fewer words.
+- **Format:** `[a-z0-9-]+` only — lowercase, kebab-case, no other punctuation, no leading/trailing hyphens.
+- **Keep** identifying markers when present: milestone tags (`phase-1-1`, `v2`, `rc-3`), ticket IDs, version numbers.
+- **Keep** the most distinguishing noun or verb — the "what this worktree is for" (`scaffold`, `migration`, `rate-limiter`, `retry`, `flaky-test`).
+- **Drop** generic filler: *implement, add, update, fix the …*; language names obvious from the repo (`go`, `python`, `ts`); scaffolding nouns (`project, module, package`); parenthetical detail; common stop words.
+- If the title is already short and clean, just lowercase + hyphenate it.
+
+### Examples
+
+| Issue title | Slug |
+|---|---|
+| *Phase 1.1: Go project scaffold (chi router, health check)* | `phase-1-1-scaffold` |
+| *Implement authentication flow with JWT* | `auth-jwt` |
+| *Add retry logic to the payment processor* | `payment-retry` |
+| *v2: migrate users table to UUIDs* | `v2-users-uuid` |
+| *Fix flaky TestConcurrentBookings in CI* | `flaky-bookings` |
+| *Git worktree management* | `worktree-mgmt` |
+
+Worktree folder: `{repo}-{N}-{slug}` (e.g. `khyst-1-worktree-mgmt`, `bayka-4-phase-1-1-scaffold`)
 Branch name: same as folder name
 
 ### 4. For custom names
