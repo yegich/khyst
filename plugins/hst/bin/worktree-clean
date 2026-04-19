@@ -50,8 +50,10 @@ fi
 pick_with_fzf() {
   printf '%s\n' "$candidates" | fzf \
     --multi --height=60% --reverse \
-    --header='space: toggle   ctrl-a: select all   enter: confirm   esc: cancel' \
+    --header='space: toggle   ctrl-a: select all   enter: confirm   ctrl-c/q: cancel' \
     --bind 'ctrl-a:toggle-all' \
+    --bind 'ctrl-q:abort' \
+    --no-mouse \
     --prompt='worktrees to remove> '
 }
 
