@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# hst-check — run the project's pre-commit gate.
+#
+# Reads .hst/checks.yaml (relative to the repo root) and runs every
+# command under the requested key (default: on_commit). Aborts on the
+# first failure. Language-agnostic — the YAML decides what to run.
+#
+# Usage:
+#   hst-check                  # equivalent to --gate on_commit
+#   hst-check --gate           # same as above
+#   hst-check --gate on_push   # run a different list (e.g. integration)
+#
+# Exits 0 if every command succeeded, non-zero otherwise.
+
+set -euo pipefail
+
+key="on_commit"
+
+while (( $# > 0 )); do
+  case "$1" in
+    --gate)
+      shift
+      if (( $# > 0 )) && [[ "$1" != --* ]]; then
+        key="$1"
+        shift
+      fi
+      ;;
+    -h|--help)
+      sed -n '2,15p' "$0"
+      exit 0
+      ;;
+    *)
+      echo "hst-check: unknown argument: $1" >&2
+      exit 2
+      ;;
+  esac
+done
+
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+if [[ -z "$repo_root" ]]; then
+  echo "hst-check: not inside a git repository" >&2
+  exit 2
+fi
+
+config="$repo_root/.hst/checks.yaml"
+if [[ ! -f "$config" ]]; then
+  echo "hst-check: no $config — run '/hst:check --discover' to seed one" >&2
+  exit 2
+fi
+
+# Extract the array under the chosen key. Lightweight YAML reader: we
+# only support the documented shape (top-level keys, each a list of
+# scalar strings; comments allowed; no nested mappings). This avoids a
+# yq dependency for what is intentionally a tiny config. portable to
+# bash 3.x (no mapfile).
+commands=()
+while IFS= read -r line; do
+  commands+=("$line")
+done < <(awk -v k="$key" '
+  BEGIN { in_block = 0 }
+  /^[[:space:]]*#/ { next }
+  /^[^[:space:]].*:[[:space:]]*$/ {
+    in_block = ($1 == k ":") ? 1 : 0
+    next
+  }
+  in_block && /^[[:space:]]*-[[:space:]]+/ {
+    sub(/^[[:space:]]*-[[:space:]]+/, "", $0)
+    # strip a single pair of surrounding quotes if present
+    if ($0 ~ /^".*"$/) { $0 = substr($0, 2, length($0) - 2) }
+    if ($0 ~ /^'\''.*'\''$/) { $0 = substr($0, 2, length($0) - 2) }
+    print
+  }
+' "$config")
+
+if (( ${#commands[@]} == 0 )); then
+  echo "hst-check: no commands under '$key:' in $config — nothing to do" >&2
+  exit 0
+fi
+
+cd "$repo_root"
+
+failed=0
+for cmd in "${commands[@]}"; do
+  echo "[hst:check] running: $cmd"
+  if ! bash -c "$cmd"; then
+    echo "[hst:check] FAILED: $cmd" >&2
+    failed=1
+    break
+  fi
+done
+
+if (( failed )); then
+  exit 1
+fi
+
+echo "[hst:check] all checks passed"
