@@ -80,35 +80,7 @@ If the branch already exists (error from git), retry without `-b`:
 git worktree add ../{worktree_folder} {branch_name}
 ```
 
-### 7. Create CLAUDE.md in the worktree
-
-Write a `CLAUDE.md` file inside the new worktree directory.
-
-For issues:
-```markdown
-# Issue #{N}: {title}
-
-{issue_url}
-
-## Description
-
-{issue_body}
-
-## Branch
-
-`{branch_name}`
-```
-
-For custom names:
-```markdown
-# {name}
-
-## Branch
-
-`{branch_name}`
-```
-
-### 8. Report
+### 7. Report
 
 After processing all arguments, print a summary table:
 
