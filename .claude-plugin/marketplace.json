@@ -27,7 +27,7 @@
       "name": "statusline",
       "source": "./plugins/statusline",
       "description": "Yegich's Claude Code statusline — model, tokens, rate-limit usage, cost, folder, session-id.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "tags": ["statusline", "ui"]
     }
   ]
