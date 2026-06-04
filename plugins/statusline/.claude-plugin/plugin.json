@@ -1,0 +1,6 @@
+{
+  "name": "statusline",
+  "version": "0.1.0",
+  "description": "Yegich's Claude Code statusline — model, tokens used/total, 5h/7d rate-limit usage, cost, folder, session-id. macOS-friendly (gracefully degrades on other platforms).",
+  "author": {"name": "yegich"}
+}

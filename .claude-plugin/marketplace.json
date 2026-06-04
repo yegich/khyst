@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "A personal collection of coding agent plugins — skills, tools, and knowledge for Claude Code and other agents.",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "plugins": [
     {
@@ -22,6 +22,13 @@
       "description": "Yegich's personal toolkit — skills and commands for everyday workflows.",
       "version": "0.5.0",
       "tags": ["git", "worktree", "github", "ci"]
+    },
+    {
+      "name": "statusline",
+      "source": "./plugins/statusline",
+      "description": "Yegich's Claude Code statusline — model, tokens, rate-limit usage, cost, folder, session-id.",
+      "version": "0.1.0",
+      "tags": ["statusline", "ui"]
     }
   ]
 }
