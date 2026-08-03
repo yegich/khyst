@@ -4,3 +4,4 @@ node_modules/
 *-workspace/
 .venv/
 .claude/
+__pycache__/
